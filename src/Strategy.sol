@@ -166,7 +166,7 @@ contract Strategy is BaseStrategy {
         if (_liquidWant < _toFree) {
 
             // liquidation can result in a profit depending on pool balance
-            (uint256 _liquidationProfit, uint256 _liquidationLoss) = withdrawSome(_toFree); 
+            (uint256 _liquidationProfit, uint256 _liquidationLoss) = _removeliquidity(_toFree); 
 
             // update the P&L to account for liquidation
             _loss = _loss + _liquidationLoss;
@@ -207,8 +207,7 @@ contract Strategy is BaseStrategy {
     {
         uint256 _liquidWant = balanceOfWant();
         if (_liquidWant < _amountNeeded) {
-            uint256 _lpTokensToSell = valueWantToLP(_amountNeeded);
-            _removeliquidity(_lpTokensToSell);
+            _removeliquidity(_amountNeeded);
         } else {
              return (_amountNeeded, 0);
         }
@@ -256,15 +255,16 @@ contract Strategy is BaseStrategy {
     }
 
 // ---------------------- HELPER AND UTILITY FUNCTIONS ----------------------
-    
+    // note: wtoken is always index 0
     function _addLiquidity(uint256 _wantAmount) internal { 
-        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1); // wtoken is always index 0
+        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
         uint256 _deadline = block.timestamp + 10 minutes;
+        // todo: implement bonus/negative price impact when pool is not balanced (in addition to slippage), need to check vs shareprice
         swap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
     }
 
     function _removeliquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0); // wtoken is always index 0
+        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0); 
         uint256 _deadline = block.timestamp + 10 minutes;
         swap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
     }
@@ -272,10 +272,6 @@ contract Strategy is BaseStrategy {
     function valueLpToWant() public view returns (uint256) {
         uint256 _lpAmount = lpToken.balanceOf(address(this));
         return swap.calculateTokenAmount(address(this),[lpToken*maxSlippage, 0],0);
-    }
-
-   function valueWantToLP() public view returns (uint256) {
-        // TODO: need logic here
     }
 
     function balanceOfWant() public view returns (uint256) {
