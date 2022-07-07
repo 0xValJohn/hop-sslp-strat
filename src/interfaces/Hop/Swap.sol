@@ -76,4 +76,13 @@ interface Swap {
     {
         return swapStorage.addLiquidity(amounts, minToMint);
     }
+
+    /**
+     * @notice Get the virtual price, to help calculate profit
+     * @return the virtual price, scaled to the POOL_PRECISION_DECIMALS
+     */
+    function getVirtualPrice() external view returns (uint256) {
+        return swapStorage.getVirtualPrice();
+    }
+
 }

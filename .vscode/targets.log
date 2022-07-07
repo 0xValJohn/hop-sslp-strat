@@ -1,6 +1,4 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
-make: *** No rule to make target 'all'.  Stop.
-
 # GNU Make 4.3
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -8,7 +6,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jul  7 14:09:38 2022
+# Make data base, printed on Thu Jul  7 15:54:22 2022
 
 # Variables
 
@@ -22,8 +20,6 @@ GNOME_SHELL_SESSION_MODE = pop
 SSH_AGENT_LAUNCHER = gnome-keyring
 # environment
 GJS_DEBUG_OUTPUT = stderr
-# environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-5973ad16-ffef-4a91-8cc1-14c170731e39.sock
 # environment
 VSCODE_CWD = /home/simon
 # environment
@@ -46,12 +42,10 @@ PWD = /home/simon/Documents/Yearn/hop-sslp-strat
 XDG_DATA_DIRS = /usr/share/pop:/usr/share/gnome:/home/simon/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop
 # automatic
 ^D = $(patsubst %/,%,$(dir $^))
-# environment
-VSCODE_LOG_STACK = false
 # automatic
 %F = $(notdir $%)
 # environment
-VSCODE_CODE_CACHE_PATH = /home/simon/.config/Code/CachedData/30d9c6cd9483b2cc586687151bcbcd635f373630
+VSCODE_CODE_CACHE_PATH = /home/simon/.config/Code/CachedData/92d25e35d9bf1a6b16f7d0758f25d48ace11e5b9
 # environment
 LANG = C
 # makefile (from '.env', line 5)
@@ -66,8 +60,6 @@ XAUTHORITY = /run/user/1000/gdm/Xauthority
 MAKEFLAGS = pqrR
 # makefile
 CURDIR := /home/simon/Documents/Yearn/hop-sslp-strat
-# environment
-VSCODE_PIPE_LOGGING = true
 # environment
 APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # environment
@@ -93,9 +85,7 @@ MAKEFILE_LIST := Makefile .env
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_VERBOSE_LOGGING = true
-# environment
-VSCODE_PID = 50928
+VSCODE_PID = 14098
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -103,7 +93,7 @@ XDG_SESSION_TYPE = x11
 # makefile (from 'Makefile', line 10)
 FORK_URL := https://mainnet.infura.io/v3/34d774f6ef71447e8f5b53b34c17d346 
 # environment
-SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/2858,unix/pop-os:/tmp/.ICE-unix/2858
+SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/2851,unix/pop-os:/tmp/.ICE-unix/2851
 # automatic
 *F = $(notdir $*)
 # makefile (from '.env', line 4)
@@ -143,9 +133,7 @@ MAKEFILES :=
 # automatic
 ^F = $(notdir $^)
 # environment
-INVOCATION_ID = 300dd372e3ce4c418135bce513a058a9
-# environment
-VSCODE_LOG_NATIVE = false
+INVOCATION_ID = ffbc7587bb9c41499834dc9e640573f5
 # environment
 USERNAME = simon
 # environment
@@ -173,7 +161,7 @@ GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
 # makefile
 .DEFAULT_GOAL := update
 # environment
-SYSTEMD_EXEC_PID = 2878
+SYSTEMD_EXEC_PID = 2870
 # makefile (from '.env', line 1)
 ETH_RPC_URL = https://mainnet.infura.io/v3/34d774f6ef71447e8f5b53b34c17d346
 # environment
@@ -187,9 +175,9 @@ MAKE_VERSION := 4.3
 # makefile (from '.env', line 2)
 FTM_RPC_URL = https://rpcapi.fantom.network
 # environment
-MANAGERPID = 2601
+MANAGERPID = 2541
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 50928
+GIO_LAUNCHED_DESKTOP_FILE_PID = 14098
 # environment
 _ = /usr/share/code/code
 # environment
@@ -199,7 +187,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # makefile (from 'Makefile', line 14)
 constructor-args := 
 # environment
-JOURNAL_STREAM = 8:43678
+JOURNAL_STREAM = 8:43494
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -211,7 +199,7 @@ QT_IM_MODULE = ibus
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # environment
-VSCODE_IPC_HOOK = /run/user/1000/vscode-1a88d1bc-1.68.1-main.sock
+VSCODE_IPC_HOOK = /run/user/1000/vscode-1a88d1bc-1.69.0-main.sock
 # default
 .RECIPEPREFIX := 
 # automatic
@@ -227,7 +215,7 @@ XDG_MENU_PREFIX = gnome-
 # environment
 GDMSESSION = pop
 # variable set hash-table stats:
-# Load=107/1024=10%, Rehash=0, Collisions=3/140=2%
+# Load=102/1024=10%, Rehash=0, Collisions=2/135=1%
 
 # Pattern-specific Variable Values
 
@@ -282,7 +270,6 @@ trace-contract:
 
 # Not a target:
 Makefile:
- 
 #  Implicit rule search has been done.
 #  Last modified 2022-07-07 14:07:35.547051611
 #  File has been updated.
@@ -292,6 +279,9 @@ clean:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
+ 
+make: *** No rule to make target 'all'.  Stop.
+
 #  recipe to execute (from 'Makefile', line 25):
 	 forge clean
 
@@ -364,6 +354,6 @@ test:
 # strcache performance: lookups = 56 / hit rate = 30%
 # hash-table stats:
 # Load=39/8192=0%, Rehash=0, Collisions=0/56=0%
-# Finished Make data base on Thu Jul  7 14:09:38 2022
+# Finished Make data base on Thu Jul  7 15:54:22 2022
 
  

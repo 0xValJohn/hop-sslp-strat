@@ -4,11 +4,8 @@ pragma solidity ^0.8.15;
 pragma experimental ABIEncoderV2;
 
 import {BaseStrategy, StrategyParams} from "@yearnvaults/contracts/BaseStrategy.sol";
-
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-
 import "./interfaces/Hop/Swap.sol";
 
 // This strategy needs to be generic & clonable
@@ -32,8 +29,6 @@ import "./interfaces/Hop/Swap.sol";
 // CanonicalToken = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9
 // SaddleLpToken = 0xCe3B19D820CB8B9ae370E423B0a329c4314335fE
 // SaddleSwap = 0x18f7402B673Ba6Fb5EA4B95768aABb8aaD7ef18a
-
-// IERC20Metadata(address(want)).decimal TODO: may be usefull
 
 contract Strategy is BaseStrategy {
     using SafeERC20 for IERC20;
@@ -259,8 +254,12 @@ contract Strategy is BaseStrategy {
     function _addLiquidity(uint256 _wantAmount) internal { 
         uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
         uint256 _deadline = block.timestamp + 10 minutes;
-        // todo: implement bonus/negative price impact when pool is not balanced (in addition to slippage), need to check vs shareprice
-        swap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
+        uint256 _priceImpact = (((_minToMint*swap.getVirtualPrice())-_wantAmount)/_wantAmount)*MAX_BIPS;
+        if (_priceImpact > -maxSlippage) {
+            return;
+        } else {
+            swap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
+        }
     }
 
     function _removeliquidity(uint256 _wantAmount) internal {
