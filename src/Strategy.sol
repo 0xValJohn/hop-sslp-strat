@@ -1,41 +1,141 @@
 // SPDX-License-Identifier: AGPL-3.0
-// Feel free to change the license, but this is what we use
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.15;
 pragma experimental ABIEncoderV2;
 
-// These are the core Yearn libraries
 import {BaseStrategy, StrategyParams} from "@yearnvaults/contracts/BaseStrategy.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-// Import interfaces for many popular DeFi projects, or add your own!
-//import "./interfaces/<protocol>/<Interface>.sol";
+
+import "./interfaces/Hop/Swap.sol";
+
+// This strategy needs to be generic & clonable
+
+// WETH (18 decimals)
+// CanonicalToken = 0x82af49447d8a07e3bd95bd0d56f35241523fbab1
+// SaddleLpToken = 0x59745774Ed5EfF903e615F5A2282Cae03484985a
+// SaddleSwap = 0x652d27c0F72771Ce5C76fd400edD61B406Ac6D97
+
+// DAI (18 decimals)
+// CanonicalToken = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1
+// SaddleLpToken = 0x68f5d998F00bB2460511021741D098c05721d8fF
+// SaddleSwap = 0xa5A33aB9063395A90CCbEa2D86a62EcCf27B5742
+
+// USDC (6 decimals)
+// CanonicalToken = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8
+// SaddleLpToken = 0xB67c014FA700E69681a673876eb8BAFAA36BFf71
+// SaddleSwap = 0x10541b07d8Ad2647Dc6cD67abd4c03575dade261
+
+// USDT (6 decimals)
+// CanonicalToken = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9
+// SaddleLpToken = 0xCe3B19D820CB8B9ae370E423B0a329c4314335fE
+// SaddleSwap = 0x18f7402B673Ba6Fb5EA4B95768aABb8aaD7ef18a
+
+// IERC20Metadata(address(want)).decimal TODO: may be usefull
 
 contract Strategy is BaseStrategy {
     using SafeERC20 for IERC20;
     using Address for address;
 
-    // solhint-disable-next-line no-empty-blocks
-    constructor(address _vault) BaseStrategy(_vault) {
-        // You can set these parameters on deployment to whatever you want
-        // maxReportDelay = 6300;
-        // profitFactor = 100;
-        // debtThreshold = 0;
+// ---------------------- STATE VARIABLES ----------------------
+
+    uint256 internal constant MAX_BIPS = 10_000;
+    uint256 saddleLpToken;
+    uint256 saddleSwap;
+    uint256 maxSlippage;
+
+// ---------------------- CONSTRUCTOR ----------------------
+
+    constructor(
+        address _vault,
+        address _saddleSwap,
+        address _saddleLpToken
+    ) public BaseStrategy(_vault) {
+         _initializeStrat();
     }
 
-    // ******** OVERRIDE THESE METHODS FROM BASE CONTRACT ************
+    function _initializeStrat() internal {
+        maxSlippage = 30;
+        saddleSwap = swap(_saddleSwap);
+        saddleLpToken = IERC20(_saddleLpToken);
+    }
+
+// ---------------------- CLONING ----------------------
+
+    event Cloned(address indexed clone);
+    bool public isOriginal = true;
+
+    function initialize(
+        address _vault,
+        address _strategist,
+        address _rewards,
+        address _keeper,
+        uint256 _slippageMax,
+        swap _saddleSwap,
+        address _saddleLpToken
+    ) external {
+        _initialize(_vault, _strategist, _rewards, _keeper);
+        _slippageMax = slippageMax;
+        _saddleSwap = saddleSwap;
+        _saddleLpToken = saddleLpToken;
+    }
+
+    function cloneHopSSlp(
+        address _vault,
+        address _strategist,
+        address _rewards,
+        address _keeper,
+        uint256 _slippageMax,
+        swap _saddleSwap,
+        address _saddleLpToken
+        ) external returns (address newStrategy) {
+            require(isOriginal, "!clone");
+            bytes20 addressBytes = bytes20(address(this));
+
+            assembly {
+                // EIP-1167 bytecode
+                let clone_code := mload(0x40)
+                mstore(
+                    clone_code,
+                    0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000
+                )
+                mstore(add(clone_code, 0x14), addressBytes)
+                mstore(
+                    add(clone_code, 0x28),
+                    0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000
+                )
+                newStrategy := create(0, clone_code, 0x37)
+            }
+
+            Strategy(newStrategy).initialize(
+                _vault,
+                _strategist,
+                _rewards,
+                _keeper,
+                _slippageMax,
+                _saddleSwap,
+                _saddleLpToken
+            );
+
+            emit Cloned(newStrategy);
+        }
 
     function name() external view override returns (string memory) {
-        // Add your own name here, suggestion e.g. "StrategyCreamYFI"
-        return "Strategy<ProtocolName><TokenType>";
+        return
+            string(
+                abi.encodePacked(
+                    "StrategyHopSSLp",
+                    IERC20Metadata(address(want)).symbol()
+                )
+            );
     }
 
+// ---------------------- MAIN ----------------------
+
     function estimatedTotalAssets() public view override returns (uint256) {
-        // TODO: Build a more accurate estimate using the value of all positions in terms of `want`
-        return want.balanceOf(address(this));
+        return balanceOfWant() + valueLpToWant();
     }
 
     function prepareReturn(uint256 _debtOutstanding)
@@ -46,17 +146,58 @@ contract Strategy is BaseStrategy {
             uint256 _loss,
             uint256 _debtPayment
         )
-    // solhint-disable-next-line no-empty-blocks
     {
-        // TODO: Do stuff here to free up any returns back into `want`
-        // NOTE: Return `_profit` which is value generated by all positions, priced in `want`
-        // NOTE: Should try to free up at least `_debtOutstanding` of underlying position
+        uint256 _totalAssets = estimatedTotalAssets();
+        uint256 _totalDebt = vault.strategies(address(this)).totalDebt;
+        if (_totalAssets >= _totalDebt) {
+            _profit = _totalAssets - _totalDebt;
+            _loss = 0;
+        } else {
+            _loss = _totalDebt - _totalAssets;
+            _profit = 0;
+        }
+        _debtPayment = _debtOutstanding;
+
+        // free up _debtOutstanding + our profit, and make any necessary adjustments to the accounting.
+        uint256 _liquidWant = balanceOfWant();
+        uint256 _toFree = _debtOutstanding + _profit;
+
+        // liquidate some of the Want
+        if (_liquidWant < _toFree) {
+
+            // liquidation can result in a profit depending on pool balance
+            (uint256 _liquidationProfit, uint256 _liquidationLoss) = withdrawSome(_toFree); 
+
+            // update the P&L to account for liquidation
+            _loss = _loss + _liquidationLoss;
+            _profit = _profit + _liquidationProfit;
+            _liquidWant = balanceOfWant();
+
+            // Case 1 - enough to pay profit (or some) only
+            if (_liquidWant <= _profit){
+                _profit = _liquidWant;
+                _debtPayment = 0;
+
+            // Case 2 - enough to pay _profit and _debtOutstanding
+            // Case 3 - enough to pay for all profit, and some _debtOutstanding
+            } else {
+                _debtPayment = Math.min(_liquidWant - _profit, _debtOutstanding);
+            }
+        }
+        if (_loss > _profit) {
+            _loss = _loss - _profit;
+            _profit = 0;
+        } else {
+            _profit = _profit - _loss;
+            _loss = 0;
+        }  
     }
 
-    // solhint-disable-next-line no-empty-blocks
     function adjustPosition(uint256 _debtOutstanding) internal override {
-        // TODO: Do something to invest excess `want` tokens (from the Vault) into your positions
-        // NOTE: Try to adjust positions so that `_debtOutstanding` can be freed up on *next* harvest (not immediately)
+        if (_liquidWant > _debtOutstanding) {
+            uint256 _amountToInvest =  _liquidWant - _debtOutstanding;
+            _addliquidity(_amountToInvest);
+        }
     }
 
     function liquidatePosition(uint256 _amountNeeded)
@@ -64,46 +205,31 @@ contract Strategy is BaseStrategy {
         override
         returns (uint256 _liquidatedAmount, uint256 _loss)
     {
-        // TODO: Do stuff here to free up to `_amountNeeded` from all positions back into `want`
-        // NOTE: Maintain invariant `want.balanceOf(this) >= _liquidatedAmount`
-        // NOTE: Maintain invariant `_liquidatedAmount + _loss <= _amountNeeded`
-
-        uint256 totalAssets = want.balanceOf(address(this));
-        if (_amountNeeded > totalAssets) {
-            _liquidatedAmount = totalAssets;
-            unchecked {
-                _loss = _amountNeeded - totalAssets;
-            }
+        uint256 _liquidWant = balanceOfWant();
+        if (_liquidWant < _amountNeeded) {
+            uint256 _lpTokensToSell = valueWantToLP(_amountNeeded);
+            _removeliquidity(_lpTokensToSell);
         } else {
+             return (_amountNeeded, 0);
+        }
+        _liquidWant = balanceOfWant();
+        if (_liquidWant >= _amountNeeded) {
             _liquidatedAmount = _amountNeeded;
+        } else {
+            _liquidatedAmount = _liquidWant;
+            _loss = _amountNeeded - _liquidWant;
         }
     }
 
     function liquidateAllPositions() internal override returns (uint256) {
-        // TODO: Liquidate all positions and return the amount freed.
+        _removeliquidity(); // TODO: add LP token
         return want.balanceOf(address(this));
     }
 
-    // NOTE: Can override `tendTrigger` and `harvestTrigger` if necessary
-    // solhint-disable-next-line no-empty-blocks
-    function prepareMigration(address _newStrategy) internal override {
-        // TODO: Transfer any non-`want` tokens to the new strategy
-        // NOTE: `migrate` will automatically forward all `want` in this strategy to the new one
+    function prepareMigration(address _newStrategy) internal override { 
+    // nothing to do here, there is no non-want token!
     }
 
-    // Override this to add all tokens/tokenized positions this contract manages
-    // on a *persistent* basis (e.g. not just for swapping back to want ephemerally)
-    // NOTE: Do *not* include `want`, already included in `sweep` below
-    //
-    // Example:
-    //
-    //    function protectedTokens() internal override view returns (address[] memory) {
-    //      address[] memory protected = new address[](3);
-    //      protected[0] = tokenA;
-    //      protected[1] = tokenB;
-    //      protected[2] = tokenC;
-    //      return protected;
-    //    }
     function protectedTokens()
         internal
         view
@@ -111,23 +237,8 @@ contract Strategy is BaseStrategy {
         returns (address[] memory)
     // solhint-disable-next-line no-empty-blocks
     {
-
+        
     }
-
-    /**
-     * @notice
-     *  Provide an accurate conversion from `_amtInWei` (denominated in wei)
-     *  to `want` (using the native decimal characteristics of `want`).
-     * @dev
-     *  Care must be taken when working with decimals to assure that the conversion
-     *  is compatible. As an example:
-     *
-     *      given 1e17 wei (0.1 ETH) as input, and want is USDC (6 decimals),
-     *      with USDC/ETH = 1800, this should give back 1800000000 (180 USDC)
-     *
-     * @param _amtInWei The amount (in wei/1e-18 ETH) to convert to `want`
-     * @return The amount in `want` of `_amtInEth` converted to `want`
-     **/
     function ethToWant(uint256 _amtInWei)
         public
         view
@@ -135,7 +246,39 @@ contract Strategy is BaseStrategy {
         override
         returns (uint256)
     {
-        // TODO create an accurate price oracle
         return _amtInWei;
+    }
+
+// ---------------------- MANAGEMENT FUNCTIONS ----------------------
+
+    function setMaxSlippage(uint256 _maxSlippage) external onlyVaultManagers {
+        maxSlippage = _maxSlippage;
+    }
+
+// ---------------------- HELPER AND UTILITY FUNCTIONS ----------------------
+    
+    function _addLiquidity(uint256 _wantAmount) internal { 
+        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1); // wtoken is always index 0
+        uint256 _deadline = block.timestamp + 10 minutes;
+        swap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
+    }
+
+    function _removeliquidity(uint256 _wantAmount) internal {
+        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0); // wtoken is always index 0
+        uint256 _deadline = block.timestamp + 10 minutes;
+        swap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
+    }
+
+    function valueLpToWant() public view returns (uint256) {
+        uint256 _lpAmount = lpToken.balanceOf(address(this));
+        return swap.calculateTokenAmount(address(this),[lpToken*maxSlippage, 0],0);
+    }
+
+   function valueWantToLP() public view returns (uint256) {
+        // TODO: need logic here
+    }
+
+    function balanceOfWant() public view returns (uint256) {
+        return want.balanceOf(address(this));
     }
 }
