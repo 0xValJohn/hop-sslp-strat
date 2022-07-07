@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jul  7 15:54:22 2022
+# Make data base, printed on Thu Jul  7 17:28:17 2022
 
 # Variables
 
@@ -85,7 +85,7 @@ MAKEFILE_LIST := Makefile .env
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 14098
+VSCODE_PID = 27691
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -177,7 +177,7 @@ FTM_RPC_URL = https://rpcapi.fantom.network
 # environment
 MANAGERPID = 2541
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 14098
+GIO_LAUNCHED_DESKTOP_FILE_PID = 27691
 # environment
 _ = /usr/share/code/code
 # environment
@@ -354,6 +354,6 @@ test:
 # strcache performance: lookups = 56 / hit rate = 30%
 # hash-table stats:
 # Load=39/8192=0%, Rehash=0, Collisions=0/56=0%
-# Finished Make data base on Thu Jul  7 15:54:22 2022
+# Finished Make data base on Thu Jul  7 17:28:17 2022
 
  
