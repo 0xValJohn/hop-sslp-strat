@@ -1,4 +1,6 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+make: *** No rule to make target 'all'.  Stop.
+
 # GNU Make 4.3
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -6,7 +8,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jul  7 17:28:17 2022
+# Make data base, printed on Tue Jul 19 18:13:43 2022
 
 # Variables
 
@@ -45,7 +47,7 @@ XDG_DATA_DIRS = /usr/share/pop:/usr/share/gnome:/home/simon/.local/share/flatpak
 # automatic
 %F = $(notdir $%)
 # environment
-VSCODE_CODE_CACHE_PATH = /home/simon/.config/Code/CachedData/92d25e35d9bf1a6b16f7d0758f25d48ace11e5b9
+VSCODE_CODE_CACHE_PATH = /home/simon/.config/Code/CachedData/3b889b090b5ad5793f524b5d1d39fda662b96a2a
 # environment
 LANG = C
 # makefile (from '.env', line 5)
@@ -85,7 +87,7 @@ MAKEFILE_LIST := Makefile .env
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 27691
+VSCODE_PID = 9603
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -93,7 +95,7 @@ XDG_SESSION_TYPE = x11
 # makefile (from 'Makefile', line 10)
 FORK_URL := https://mainnet.infura.io/v3/34d774f6ef71447e8f5b53b34c17d346 
 # environment
-SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/2851,unix/pop-os:/tmp/.ICE-unix/2851
+SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/2384,unix/pop-os:/tmp/.ICE-unix/2384
 # automatic
 *F = $(notdir $*)
 # makefile (from '.env', line 4)
@@ -133,7 +135,7 @@ MAKEFILES :=
 # automatic
 ^F = $(notdir $^)
 # environment
-INVOCATION_ID = ffbc7587bb9c41499834dc9e640573f5
+INVOCATION_ID = 8b402747633e45c3b06b2e427a8cdb22
 # environment
 USERNAME = simon
 # environment
@@ -161,7 +163,7 @@ GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
 # makefile
 .DEFAULT_GOAL := update
 # environment
-SYSTEMD_EXEC_PID = 2870
+SYSTEMD_EXEC_PID = 2403
 # makefile (from '.env', line 1)
 ETH_RPC_URL = https://mainnet.infura.io/v3/34d774f6ef71447e8f5b53b34c17d346
 # environment
@@ -175,9 +177,9 @@ MAKE_VERSION := 4.3
 # makefile (from '.env', line 2)
 FTM_RPC_URL = https://rpcapi.fantom.network
 # environment
-MANAGERPID = 2541
+MANAGERPID = 2168
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 27691
+GIO_LAUNCHED_DESKTOP_FILE_PID = 9603
 # environment
 _ = /usr/share/code/code
 # environment
@@ -187,7 +189,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # makefile (from 'Makefile', line 14)
 constructor-args := 
 # environment
-JOURNAL_STREAM = 8:43494
+JOURNAL_STREAM = 8:41286
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -199,7 +201,7 @@ QT_IM_MODULE = ibus
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # environment
-VSCODE_IPC_HOOK = /run/user/1000/vscode-1a88d1bc-1.69.0-main.sock
+VSCODE_IPC_HOOK = /run/user/1000/vscode-1a88d1bc-1.69.2-main.sock
 # default
 .RECIPEPREFIX := 
 # automatic
@@ -264,14 +266,14 @@ trace-contract:
 # Not a target:
 .env:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-21 13:26:05.418573
+#  Last modified 2022-06-21 19:26:05.418573
 #  File has been updated.
 #  Successfully updated.
 
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-07-07 14:07:35.547051611
+#  Last modified 2022-07-07 20:07:35.547051611
 #  File has been updated.
 #  Successfully updated.
 
@@ -279,9 +281,6 @@ clean:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
- 
-make: *** No rule to make target 'all'.  Stop.
-
 #  recipe to execute (from 'Makefile', line 25):
 	 forge clean
 
@@ -290,6 +289,7 @@ test-contract:
 #  Modification time never checked.
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 19):
+ 
 	 forge test -vv --fork-url ${FORK_URL} --match-contract $(contract) --etherscan-api-key ${ETHERSCAN_API_KEY}
 
 test-local:
@@ -354,6 +354,6 @@ test:
 # strcache performance: lookups = 56 / hit rate = 30%
 # hash-table stats:
 # Load=39/8192=0%, Rehash=0, Collisions=0/56=0%
-# Finished Make data base on Thu Jul  7 17:28:17 2022
+# Finished Make data base on Tue Jul 19 18:13:43 2022
 
  
