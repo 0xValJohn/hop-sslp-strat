@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.12;
 pragma experimental ABIEncoderV2;
 
 import {BaseStrategy, StrategyParams} from "@yearnvaults/contracts/BaseStrategy.sol";
@@ -8,24 +8,31 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/Hop/Swap.sol";
 
+// Function needed from hop interface:
+// swap.addLiquidity
+// swap.calculateTokenAmount
+// swap.removeLiquidityOneToken
+// swap.calculateRemoveLiquidityOneToken
+// swap.getVirtualPrice
+
 // This strategy needs to be generic & clonable
 
-// WETH (18 decimals)
+// WETH
 // CanonicalToken = 0x82af49447d8a07e3bd95bd0d56f35241523fbab1
 // SaddleLpToken = 0x59745774Ed5EfF903e615F5A2282Cae03484985a
 // SaddleSwap = 0x652d27c0F72771Ce5C76fd400edD61B406Ac6D97
 
-// DAI (18 decimals)
+// DAI
 // CanonicalToken = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1
 // SaddleLpToken = 0x68f5d998F00bB2460511021741D098c05721d8fF
 // SaddleSwap = 0xa5A33aB9063395A90CCbEa2D86a62EcCf27B5742
 
-// USDC (6 decimals)
+// USDC
 // CanonicalToken = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8
 // SaddleLpToken = 0xB67c014FA700E69681a673876eb8BAFAA36BFf71
 // SaddleSwap = 0x10541b07d8Ad2647Dc6cD67abd4c03575dade261
 
-// USDT (6 decimals)
+// USDT
 // CanonicalToken = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9
 // SaddleLpToken = 0xCe3B19D820CB8B9ae370E423B0a329c4314335fE
 // SaddleSwap = 0x18f7402B673Ba6Fb5EA4B95768aABb8aaD7ef18a
@@ -216,7 +223,7 @@ contract Strategy is BaseStrategy {
     }
 
     function liquidateAllPositions() internal override returns (uint256) {
-        _removeliquidity(); // TODO: add LP token
+        _removeliquidity(_calculateRemoveLiquidityOneToken(lpToken.balanceOf(address(this))));
         return want.balanceOf(address(this));
     }
 
@@ -268,9 +275,13 @@ contract Strategy is BaseStrategy {
         swap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
     }
 
+    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount) internal {
+        return swap.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
+    }
+
     function valueLpToWant() public view returns (uint256) {
-        uint256 _lpAmount = lpToken.balanceOf(address(this));
-        return swap.calculateTokenAmount(address(this),[lpToken*maxSlippage, 0],0);
+        uint256 _lpTokenAmount = lpToken.balanceOf(address(this));
+        return swap.calculateTokenAmount(address(this),[_lpTokenAmount, 0],0);
     }
 
     function balanceOfWant() public view returns (uint256) {
