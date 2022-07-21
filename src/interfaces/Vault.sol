@@ -30,9 +30,7 @@ interface IVault is IERC20 {
         uint256 amount,
         uint256 expiry,
         bytes calldata signature
-    )
-        external
-        returns (bool);
+    ) external returns (bool);
 
     function initialize(
         address token,
@@ -42,8 +40,7 @@ interface IVault is IERC20 {
         string memory symbol,
         address guardian,
         address management
-    )
-        external;
+    ) external;
 
     function addStrategy(
         address _strategy,
@@ -51,8 +48,7 @@ interface IVault is IERC20 {
         uint256 _minDebtPerHarvest,
         uint256 _maxDebtPerHarvest,
         uint256 _performanceFee
-    )
-        external;
+    ) external;
 
     function setDepositLimit(uint256 amount) external;
 
@@ -103,10 +99,7 @@ interface IVault is IERC20 {
      */
     function debtOutstanding() external view returns (uint256);
 
-    function debtOutstanding(address _strategy)
-        external
-        view
-        returns (uint256);
+    function debtOutstanding(address _strategy) external view returns (uint256);
 
     /**
      * View how much the Vault expect this Strategy to return at the current
@@ -121,9 +114,11 @@ interface IVault is IERC20 {
      * Strategy. Therefore, this function will be called by BaseStrategy to
      * make sure the integration is correct.
      */
-    function report(uint256 _gain, uint256 _loss, uint256 _debtPayment)
-        external
-        returns (uint256);
+    function report(
+        uint256 _gain,
+        uint256 _loss,
+        uint256 _debtPayment
+    ) external returns (uint256);
 
     /**
      * This function should only be used in the scenario where the Strategy is
@@ -139,8 +134,7 @@ interface IVault is IERC20 {
 
     function revokeStrategy(address strategy) external;
 
-    function migrateStrategy(address oldVersion, address newVersion)
-        external;
+    function migrateStrategy(address oldVersion, address newVersion) external;
 
     function setEmergencyShutdown(bool active) external;
 
@@ -149,8 +143,11 @@ interface IVault is IERC20 {
     function updateStrategyDebtRatio(address strategy, uint256 debtRatio)
         external;
 
-    function withdraw(uint256 maxShare, address recipient, uint256 maxLoss)
-        external;
+    function withdraw(
+        uint256 maxShare,
+        address recipient,
+        uint256 maxLoss
+    ) external;
 
     /**
      * View the governance address of the Vault to assert privileged functions

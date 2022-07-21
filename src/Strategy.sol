@@ -8,28 +8,6 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./interfaces/Hop/ISwap.sol";
 
-// This strategy needs to be generic & clonable
-
-// WETH
-// CanonicalToken = 0x82af49447d8a07e3bd95bd0d56f35241523fbab1
-// SaddleLpToken = 0x59745774Ed5EfF903e615F5A2282Cae03484985a
-// SaddleSwap = 0x652d27c0F72771Ce5C76fd400edD61B406Ac6D97
-
-// DAI
-// CanonicalToken = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1
-// SaddleLpToken = 0x68f5d998F00bB2460511021741D098c05721d8fF
-// SaddleSwap = 0xa5A33aB9063395A90CCbEa2D86a62EcCf27B5742
-
-// USDC
-// CanonicalToken = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8
-// SaddleLpToken = 0xB67c014FA700E69681a673876eb8BAFAA36BFf71
-// SaddleSwap = 0x10541b07d8Ad2647Dc6cD67abd4c03575dade261
-
-// USDT
-// CanonicalToken = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9
-// SaddleLpToken = 0xCe3B19D820CB8B9ae370E423B0a329c4314335fE
-// SaddleSwap = 0x18f7402B673Ba6Fb5EA4B95768aABb8aaD7ef18a
-
 contract Strategy is BaseStrategy {
     using SafeERC20 for IERC20;
     using Address for address;
@@ -40,6 +18,7 @@ contract Strategy is BaseStrategy {
     uint256 saddleLpToken;
     uint256 saddleSwap;
     uint256 maxSlippage;
+    ISwap public hop;
 
     // ---------------------- CONSTRUCTOR ----------------------
 
@@ -47,12 +26,12 @@ contract Strategy is BaseStrategy {
         public
         BaseStrategy(_vault)
     {
-        _initializeStrat();
+        _initializeStrat(_saddleLpToken, _saddleSwap);
     }
 
-    function _initializeStrat() internal {
+    function _initializeStrat(address _saddleSwap, address _saddleLpToken) internal {
         maxSlippage = 30;
-        saddleSwap = ISwap(_saddleSwap);
+        saddleSwap = hop(_saddleSwap);
         saddleLpToken = IERC20(_saddleLpToken);
     }
 
@@ -259,31 +238,31 @@ contract Strategy is BaseStrategy {
     // note: wtoken is always index 0
 
     function _addLiquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint = ISwap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
+        uint256 _minToMint = hop.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
         uint256 _deadline = block.timestamp + 10 minutes;
-        uint256 _priceImpact = (_minToMint * ISwap.getVirtualPrice() - _wantAmount) / _wantAmount * MAX_BIPS;
+        uint256 _priceImpact = (_minToMint * hop.getVirtualPrice() - _wantAmount) / _wantAmount * MAX_BIPS;
         if (_priceImpact > -maxSlippage) {
             return;
         } else {
-            ISwap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
+            hop.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
         }
     }
 
     function _removeliquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint = ISwap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
+        uint256 _minToMint = hop.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
         uint256 _deadline = block.timestamp + 10 minutes;
-        ISwap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
+        hop.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
     }
 
     function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount)
         internal
     {
-        return ISwap.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
+        return hop.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
     }
 
     function valueLpToWant() public view returns (uint256) {
         uint256 _lpTokenAmount = saddleLpToken.balanceOf(address(this));
-        return ISwap.calculateTokenAmount(address(this),[_lpTokenAmount, 0],0);
+        return hop.calculateTokenAmount(address(this),[_lpTokenAmount, 0],0);
     }
 
     function balanceOfWant() public view returns (uint256) {
