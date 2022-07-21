@@ -1,26 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
-
 pragma solidity 0.8.12;
-
 pragma experimental ABIEncoderV2;
 
-import {
-    BaseStrategy,
-    StrategyParams
-} from "@yearnvaults/contracts/BaseStrategy.sol";
+import {BaseStrategy, StrategyParams} from "@yearnvaults/contracts/BaseStrategy.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {
-    SafeERC20,
-    IERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./interfaces/Hop/ISwap.sol";
-
-// Function needed from hop interface:
-// swap.addLiquidity
-// swap.calculateTokenAmount
-// swap.removeLiquidityOneToken
-// swap.calculateRemoveLiquidityOneToken
-// swap.getVirtualPrice
 
 // This strategy needs to be generic & clonable
 
@@ -66,7 +52,7 @@ contract Strategy is BaseStrategy {
 
     function _initializeStrat() internal {
         maxSlippage = 30;
-        saddleSwap = swap(_saddleSwap);
+        saddleSwap = ISwap(_saddleSwap);
         saddleLpToken = IERC20(_saddleLpToken);
     }
 
@@ -81,24 +67,24 @@ contract Strategy is BaseStrategy {
         address _strategist,
         address _rewards,
         address _keeper,
-        uint256 _slippageMax,
+        uint256 _maxSlippage,
         address _saddleSwap,
         address _saddleLpToken
     )
         external
     {
         _initialize(_vault, _strategist, _rewards, _keeper);
-        _slippageMax = slippageMax;
+        _maxSlippage = maxSlippage;
         _saddleSwap = saddleSwap;
         _saddleLpToken = saddleLpToken;
     }
-
+    
     function cloneHopSSlp(
         address _vault,
         address _strategist,
         address _rewards,
         address _keeper,
-        uint256 _slippageMax,
+        uint256 _maxSlippage,
         address _saddleSwap,
         address _saddleLpToken
     )
@@ -128,7 +114,7 @@ contract Strategy is BaseStrategy {
                 _strategist,
                 _rewards,
                 _keeper,
-                _slippageMax,
+                _maxSlippage,
                 _saddleSwap,
                 _saddleLpToken
             );
@@ -203,9 +189,10 @@ contract Strategy is BaseStrategy {
     }
 
     function adjustPosition(uint256 _debtOutstanding) internal override {
+        uint256 _liquidWant = balanceOfWant(); 
         if (_liquidWant > _debtOutstanding) {
             uint256 _amountToInvest = _liquidWant - _debtOutstanding;
-            _addliquidity(_amountToInvest);
+            _addLiquidity(_amountToInvest);
         }
     }
 
@@ -230,7 +217,7 @@ contract Strategy is BaseStrategy {
     }
 
     function liquidateAllPositions() internal override returns (uint256) {
-        _removeliquidity(_calculateRemoveLiquidityOneToken(lpToken.balanceOf(address(this))));
+        _removeliquidity(_calculateRemoveLiquidityOneToken(saddleLpToken.balanceOf(address(this))));
         return want.balanceOf(address(this));
     }
 
@@ -266,38 +253,37 @@ contract Strategy is BaseStrategy {
     }
 
     // ---------------------- HELPER AND UTILITY FUNCTIONS ----------------------
+
+    // To deposit to Hop, we need to create an array of uints that tells Hop how much of each asset we want to deposit.
+    // If we were to deposit 100 WETH e.g., we would pass [100, 0] (forget decimals for simplicity).
     // note: wtoken is always index 0
+
     function _addLiquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint =
-            swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
+        uint256 _minToMint = ISwap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
         uint256 _deadline = block.timestamp + 10 minutes;
-        uint256 _priceImpact = (
-            _minToMint * swap.getVirtualPrice() - _wantAmount
-            ) / _wantAmount
-            * MAX_BIPS;
+        uint256 _priceImpact = (_minToMint * ISwap.getVirtualPrice() - _wantAmount) / _wantAmount * MAX_BIPS;
         if (_priceImpact > -maxSlippage) {
             return;
         } else {
-            swap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
+            ISwap.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
         }
     }
 
     function _removeliquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint =
-            swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
+        uint256 _minToMint = ISwap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
         uint256 _deadline = block.timestamp + 10 minutes;
-        swap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
+        ISwap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
     }
 
     function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount)
         internal
     {
-        return swap.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
+        return ISwap.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
     }
 
     function valueLpToWant() public view returns (uint256) {
-        uint256 _lpTokenAmount = lpToken.balanceOf(address(this));
-        return swap.calculateTokenAmount(address(this),[_lpTokenAmount, 0],0);
+        uint256 _lpTokenAmount = saddleLpToken.balanceOf(address(this));
+        return ISwap.calculateTokenAmount(address(this),[_lpTokenAmount, 0],0);
     }
 
     function balanceOfWant() public view returns (uint256) {
