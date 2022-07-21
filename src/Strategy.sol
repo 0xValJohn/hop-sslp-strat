@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0
 
 pragma solidity 0.8.12;
+
 pragma experimental ABIEncoderV2;
 
-import {BaseStrategy, StrategyParams} from "@yearnvaults/contracts/BaseStrategy.sol";
+import {
+    BaseStrategy,
+    StrategyParams
+} from "@yearnvaults/contracts/BaseStrategy.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./interfaces/Hop/Swap.sol";
+import {
+    SafeERC20,
+    IERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./interfaces/Hop/ISwap.sol";
 
 // Function needed from hop interface:
 // swap.addLiquidity
@@ -41,21 +48,20 @@ contract Strategy is BaseStrategy {
     using SafeERC20 for IERC20;
     using Address for address;
 
-// ---------------------- STATE VARIABLES ----------------------
+    // ---------------------- STATE VARIABLES ----------------------
 
     uint256 internal constant MAX_BIPS = 10_000;
     uint256 saddleLpToken;
     uint256 saddleSwap;
     uint256 maxSlippage;
 
-// ---------------------- CONSTRUCTOR ----------------------
+    // ---------------------- CONSTRUCTOR ----------------------
 
-    constructor(
-        address _vault,
-        address _saddleSwap,
-        address _saddleLpToken
-    ) public BaseStrategy(_vault) {
-         _initializeStrat();
+    constructor(address _vault, address _saddleSwap, address _saddleLpToken)
+        public
+        BaseStrategy(_vault)
+    {
+        _initializeStrat();
     }
 
     function _initializeStrat() internal {
@@ -64,9 +70,10 @@ contract Strategy is BaseStrategy {
         saddleLpToken = IERC20(_saddleLpToken);
     }
 
-// ---------------------- CLONING ----------------------
+    // ---------------------- CLONING ----------------------
 
     event Cloned(address indexed clone);
+
     bool public isOriginal = true;
 
     function initialize(
@@ -75,9 +82,11 @@ contract Strategy is BaseStrategy {
         address _rewards,
         address _keeper,
         uint256 _slippageMax,
-        swap _saddleSwap,
+        address _saddleSwap,
         address _saddleLpToken
-    ) external {
+    )
+        external
+    {
         _initialize(_vault, _strategist, _rewards, _keeper);
         _slippageMax = slippageMax;
         _saddleSwap = saddleSwap;
@@ -90,13 +99,16 @@ contract Strategy is BaseStrategy {
         address _rewards,
         address _keeper,
         uint256 _slippageMax,
-        swap _saddleSwap,
+        address _saddleSwap,
         address _saddleLpToken
-        ) external returns (address newStrategy) {
-            require(isOriginal, "!clone");
-            bytes20 addressBytes = bytes20(address(this));
+    )
+        external
+        returns (address newStrategy)
+    {
+        require(isOriginal, "!clone");
+        bytes20 addressBytes = bytes20(address(this));
 
-            assembly {
+        assembly {
                 // EIP-1167 bytecode
                 let clone_code := mload(0x40)
                 mstore(
@@ -111,7 +123,7 @@ contract Strategy is BaseStrategy {
                 newStrategy := create(0, clone_code, 0x37)
             }
 
-            Strategy(newStrategy).initialize(
+        Strategy(newStrategy).initialize(
                 _vault,
                 _strategist,
                 _rewards,
@@ -121,8 +133,8 @@ contract Strategy is BaseStrategy {
                 _saddleLpToken
             );
 
-            emit Cloned(newStrategy);
-        }
+        emit Cloned(newStrategy);
+    }
 
     function name() external view override returns (string memory) {
         return
@@ -134,7 +146,7 @@ contract Strategy is BaseStrategy {
             );
     }
 
-// ---------------------- MAIN ----------------------
+    // ---------------------- MAIN ----------------------
 
     function estimatedTotalAssets() public view override returns (uint256) {
         return balanceOfWant() + valueLpToWant();
@@ -143,11 +155,7 @@ contract Strategy is BaseStrategy {
     function prepareReturn(uint256 _debtOutstanding)
         internal
         override
-        returns (
-            uint256 _profit,
-            uint256 _loss,
-            uint256 _debtPayment
-        )
+        returns (uint256 _profit, uint256 _loss, uint256 _debtPayment)
     {
         uint256 _totalAssets = estimatedTotalAssets();
         uint256 _totalDebt = vault.strategies(address(this)).totalDebt;
@@ -166,9 +174,9 @@ contract Strategy is BaseStrategy {
 
         // liquidate some of the Want
         if (_liquidWant < _toFree) {
-
             // liquidation can result in a profit depending on pool balance
-            (uint256 _liquidationProfit, uint256 _liquidationLoss) = _removeliquidity(_toFree); 
+            (uint256 _liquidationProfit, uint256 _liquidationLoss) =
+                _removeliquidity(_toFree);
 
             // update the P&L to account for liquidation
             _loss = _loss + _liquidationLoss;
@@ -176,10 +184,9 @@ contract Strategy is BaseStrategy {
             _liquidWant = balanceOfWant();
 
             // Case 1 - enough to pay profit (or some) only
-            if (_liquidWant <= _profit){
+            if (_liquidWant <= _profit) {
                 _profit = _liquidWant;
                 _debtPayment = 0;
-
             // Case 2 - enough to pay _profit and _debtOutstanding
             // Case 3 - enough to pay for all profit, and some _debtOutstanding
             } else {
@@ -192,12 +199,12 @@ contract Strategy is BaseStrategy {
         } else {
             _profit = _profit - _loss;
             _loss = 0;
-        }  
+        }
     }
 
     function adjustPosition(uint256 _debtOutstanding) internal override {
         if (_liquidWant > _debtOutstanding) {
-            uint256 _amountToInvest =  _liquidWant - _debtOutstanding;
+            uint256 _amountToInvest = _liquidWant - _debtOutstanding;
             _addliquidity(_amountToInvest);
         }
     }
@@ -211,7 +218,7 @@ contract Strategy is BaseStrategy {
         if (_liquidWant < _amountNeeded) {
             _removeliquidity(_amountNeeded);
         } else {
-             return (_amountNeeded, 0);
+            return (_amountNeeded, 0);
         }
         _liquidWant = balanceOfWant();
         if (_liquidWant >= _amountNeeded) {
@@ -227,7 +234,7 @@ contract Strategy is BaseStrategy {
         return want.balanceOf(address(this));
     }
 
-    function prepareMigration(address _newStrategy) internal override { 
+    function prepareMigration(address _newStrategy) internal override {
     // nothing to do here, there is no non-want token!
     }
 
@@ -237,9 +244,8 @@ contract Strategy is BaseStrategy {
         override
         returns (address[] memory)
     // solhint-disable-next-line no-empty-blocks
-    {
-        
-    }
+    {}
+
     function ethToWant(uint256 _amtInWei)
         public
         view
@@ -250,18 +256,25 @@ contract Strategy is BaseStrategy {
         return _amtInWei;
     }
 
-// ---------------------- MANAGEMENT FUNCTIONS ----------------------
+    // ---------------------- MANAGEMENT FUNCTIONS ----------------------
 
-    function setMaxSlippage(uint256 _maxSlippage) external onlyVaultManagers {
+    function setMaxSlippage(uint256 _maxSlippage)
+        external
+        onlyVaultManagers
+    {
         maxSlippage = _maxSlippage;
     }
 
-// ---------------------- HELPER AND UTILITY FUNCTIONS ----------------------
+    // ---------------------- HELPER AND UTILITY FUNCTIONS ----------------------
     // note: wtoken is always index 0
-    function _addLiquidity(uint256 _wantAmount) internal { 
-        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
+    function _addLiquidity(uint256 _wantAmount) internal {
+        uint256 _minToMint =
+            swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
         uint256 _deadline = block.timestamp + 10 minutes;
-        uint256 _priceImpact = (((_minToMint*swap.getVirtualPrice())-_wantAmount)/_wantAmount)*MAX_BIPS;
+        uint256 _priceImpact = (
+            _minToMint * swap.getVirtualPrice() - _wantAmount
+            ) / _wantAmount
+            * MAX_BIPS;
         if (_priceImpact > -maxSlippage) {
             return;
         } else {
@@ -270,12 +283,15 @@ contract Strategy is BaseStrategy {
     }
 
     function _removeliquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint = swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0); 
+        uint256 _minToMint =
+            swap.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
         uint256 _deadline = block.timestamp + 10 minutes;
         swap.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
     }
 
-    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount) internal {
+    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount)
+        internal
+    {
         return swap.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
     }
 

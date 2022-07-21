@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.12;
+
 import "forge-std/console.sol";
 
 import {StrategyFixture} from "./utils/StrategyFixture.sol";
@@ -100,12 +101,10 @@ contract StrategyOperationsTest is StrategyFixture {
         skip(1);
         vm.prank(strategist);
         strategy.harvest();
-        skip(6 hours);
-
-        // TODO: Uncomment the lines below
-        // uint256 profit = want.balanceOf(address(vault));
+        skip(6 hours); // uint256 profit = want.balanceOf(address(vault));
         // assertGt(want.balanceOf(address(strategy)) + profit, _amount);
         // assertGt(vault.pricePerShare(), beforePps)
+    // TODO: Uncomment the lines below
     }
 
     function testChangeDebt(uint256 _amount) public {
@@ -130,16 +129,14 @@ contract StrategyOperationsTest is StrategyFixture {
         skip(1);
         vm.prank(strategist);
         strategy.harvest();
-        assertRelApproxEq(strategy.estimatedTotalAssets(), _amount, DELTA);
-
-        // In order to pass these tests, you will need to implement prepareReturn.
-        // TODO: uncomment the following lines.
+        assertRelApproxEq(strategy.estimatedTotalAssets(), _amount, DELTA); // TODO: uncomment the following lines.
         // vm.prank(gov);
         // vault.updateStrategyDebtRatio(address(strategy), 5_000);
         // skip(1);
         // vm.prank(strategist);
         // strategy.harvest();
         // assertRelApproxEq(strategy.estimatedTotalAssets(), half, DELTA);
+    // In order to pass these tests, you will need to implement prepareReturn.
     }
 
     function testSweep(uint256 _amount) public {

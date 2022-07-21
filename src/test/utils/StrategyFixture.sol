@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.12;
+
 pragma abicoder v2;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from
+    "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ExtendedTest} from "./ExtendedTest.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {IVault} from "../../interfaces/Vault.sol";
@@ -46,7 +48,7 @@ contract StrategyFixture is ExtendedTest {
     // @dev used for non-fuzz tests to test large amounts
     uint256 public bigAmount;
     // Used for integer approximation
-    uint256 public constant DELTA = 10**5;
+    uint256 public constant DELTA = 10 ** 5;
 
     function setUp() public virtual {
         _setTokenPrices();
@@ -71,13 +73,11 @@ contract StrategyFixture is ExtendedTest {
         vault = IVault(_vault);
         strategy = Strategy(_strategy);
 
-        minFuzzAmt = 10**vault.decimals() / 10;
+        minFuzzAmt = 10 ** vault.decimals() / 10;
         maxFuzzAmt =
-            uint256(maxDollarNotional / tokenPrices[token]) *
-            10**vault.decimals();
+            uint256(maxDollarNotional / tokenPrices[token]) * 10 ** vault.decimals();
         bigAmount =
-            uint256(bigDollarNotional / tokenPrices[token]) *
-            10**vault.decimals();
+            uint256(bigDollarNotional / tokenPrices[token]) * 10 ** vault.decimals();
 
         // add more labels to make your traces readable
         vm.label(address(vault), "Vault");
@@ -91,8 +91,7 @@ contract StrategyFixture is ExtendedTest {
         vm.label(management, "Management");
         vm.label(strategist, "Strategist");
         vm.label(keeper, "Keeper");
-
-        // do here additional setup
+    // do here additional setup
     }
 
     // Deploys a vault
@@ -104,7 +103,10 @@ contract StrategyFixture is ExtendedTest {
         string memory _symbol,
         address _guardian,
         address _management
-    ) public returns (address) {
+    )
+        public
+        returns (address)
+    {
         vm.prank(_gov);
         address _vaultAddress = deployCode(vaultArtifact);
         IVault _vault = IVault(_vaultAddress);
@@ -144,7 +146,10 @@ contract StrategyFixture is ExtendedTest {
         address _management,
         address _keeper,
         address _strategist
-    ) public returns (address _vaultAddr, address _strategyAddr) {
+    )
+        public
+        returns (address _vaultAddr, address _strategyAddr)
+    {
         _vaultAddr = deployVault(
             _token,
             _gov,
