@@ -111,7 +111,7 @@ contract Strategy is BaseStrategy {
             );
     }
 
-    // ---------------------- MAIN ----------------------
+  // ---------------------- MAIN ----------------------
 
     function estimatedTotalAssets() public view override returns (uint256) {
         return balanceOfWant() + valueLpToWant();
@@ -194,7 +194,9 @@ contract Strategy is BaseStrategy {
     }
 
     function liquidateAllPositions() internal override returns (uint256) {
-        _removeliquidity(_calculateRemoveLiquidityOneToken(saddleLpToken.balanceOf(address(this))));
+        uint256 _lpTokenAmount = saddleLpToken.balanceOf(address(this));
+        uint256 _amountToLiquidate = _calculateRemoveLiquidityOneToken(_lpTokenAmount);
+        _removeliquidity(_amountToLiquidate);
         return want.balanceOf(address(this));
     }
 
@@ -236,19 +238,23 @@ contract Strategy is BaseStrategy {
     // note: wtoken is always index 0
 
     function _addLiquidity(uint256 _wantAmount) internal {
-        uint256 _minToMint = hop.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],1);
+        uint256[] memory _amountsToAdd = new uint256[](2);
+        _amountsToAdd[0] = _wantAmount;
+        uint256 _minToMint = hop.calculateTokenAmount(address(this), _amountsToAdd, true);
         uint256 _deadline = block.timestamp + 10 minutes;
         uint256 _priceImpact = (_minToMint * hop.getVirtualPrice() - _wantAmount) / _wantAmount * MAX_BIPS;
-        if (_priceImpact > -maxSlippage) {
+        if (_priceImpact > maxSlippage) {
             return;
         } else {
-            hop.addLiquidity([_wantAmount, 0], _minToMint, _deadline);
+            hop.addLiquidity(_amountsToAdd, _minToMint, _deadline);
         }
     }
 
     function _removeliquidity(uint256 _wantAmount) internal returns (uint256 _liquidationProfit, uint256 _liquidationLoss) {
+        uint256[] memory _amountsToRemove = new uint256[](2);
+        _amountsToRemove[0] = _wantAmount;
         uint256 _estimatedTotalAssetsBefore = estimatedTotalAssets();
-        uint256 _minToMint = hop.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
+        uint256 _minToMint = hop.calculateTokenAmount(address(this), _amountsToRemove, false);
         uint256 _deadline = block.timestamp + 10 minutes;
         hop.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
         uint256 _estimatedTotalAssetsAfter = estimatedTotalAssets();
@@ -259,13 +265,15 @@ contract Strategy is BaseStrategy {
         }
     }
 
-    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount) internal {
+    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount) internal returns (uint256) {
         return hop.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
     }
 
     function valueLpToWant() public view returns (uint256) {
         uint256 _lpTokenAmount = saddleLpToken.balanceOf(address(this));
-        return hop.calculateTokenAmount(address(this),[_lpTokenAmount, 0],0);
+        uint256[] memory _amounts = new uint256[](2);
+        _amounts[0] = _lpTokenAmount;
+        return hop.calculateTokenAmount(address(this), _amounts, false);
     }
 
     function balanceOfWant() public view returns (uint256) {

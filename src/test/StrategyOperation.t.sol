@@ -12,23 +12,37 @@ contract StrategyOperationsTest is StrategyFixture {
         super.setUp();
     }
 
-    function testSetupVaultOK() public {
-        console.log("address of vault", address(vault));
-        assertTrue(address(0) != address(vault));
-        assertEq(vault.token(), address(want));
-        assertEq(vault.depositLimit(), type(uint256).max);
-    }
+    // function testSetupVaultOK() public {
+    //     console.log("address of vault", address(vault));
+    //     assertTrue(address(0) != address(vault));
+    //     assertEq(vault.token(), address(want));
+    //     assertEq(vault.depositLimit(), type(uint256).max);
+    // }
 
-    // TODO: add additional check on strat params
-    function testSetupStrategyOK() public {
-        console.log("address of strategy", address(strategy));
-        assertTrue(address(0) != address(strategy));
-        assertEq(address(strategy.vault()), address(vault));
-    }
+    // // TODO: add additional check on strat params
+    // function testSetupStrategyOK() public {
+    //     console.log("address of strategy", address(strategy));
+    //     assertTrue(address(0) != address(strategy));
+    //     assertEq(address(strategy.vault()), address(vault));
+    // }
 
     /// Test Operations
-    function testStrategyOperation(uint256 _amount) public {
-        vm.assume(_amount > minFuzzAmt && _amount < maxFuzzAmt);
+    function testStrategyOperation(uint256 _fuzzAmount) public {
+        vm.assume(_fuzzAmount > minFuzzAmt && _fuzzAmount < maxFuzzAmt);
+        for(uint8 i = 0; i < assetFixtures.length; ++i) {
+            AssetFixture memory _assetFixture = assetFixtures[i];
+            IVault vault = _assetFixture.vault;
+            Strategy strategy = _assetFixture.strategy;
+            IERC20 want = _assetFixture.want;
+
+            uint256 _amount = _fuzzAmount;
+            uint8 _wantDecimals = IERC20Metadata(address(want)).decimals();
+            if (_wantDecimals != 18) {
+                uint256 _decimalDifference = 18 - _wantDecimals;
+
+                _amount = _amount / (10 ** _decimalDifference);
+            }
+
         deal(address(want), user, _amount);
 
         uint256 balanceBefore = want.balanceOf(address(user));
@@ -51,10 +65,24 @@ contract StrategyOperationsTest is StrategyFixture {
         vault.withdraw();
 
         assertRelApproxEq(want.balanceOf(user), balanceBefore, DELTA);
+     }
     }
 
-    function testEmergencyExit(uint256 _amount) public {
-        vm.assume(_amount > minFuzzAmt && _amount < maxFuzzAmt);
+    function testEmergencyExit(uint256 _fuzzAmount) public {
+        vm.assume(_fuzzAmount > minFuzzAmt && _fuzzAmount < maxFuzzAmt);
+        for(uint8 i = 0; i < assetFixtures.length; ++i) {
+            AssetFixture memory _assetFixture = assetFixtures[i];
+            IVault vault = _assetFixture.vault;
+            Strategy strategy = _assetFixture.strategy;
+            IERC20 want = _assetFixture.want;
+
+            uint256 _amount = _fuzzAmount;
+            uint8 _wantDecimals = IERC20Metadata(address(want)).decimals();
+            if (_wantDecimals != 18) {
+                uint256 _decimalDifference = 18 - _wantDecimals;
+
+                _amount = _amount / (10 ** _decimalDifference);
+            }
         deal(address(want), user, _amount);
 
         // Deposit to the vault
@@ -74,10 +102,24 @@ contract StrategyOperationsTest is StrategyFixture {
         vm.prank(strategist);
         strategy.harvest();
         assertLt(strategy.estimatedTotalAssets(), _amount);
+     }
     }
 
-    function testProfitableHarvest(uint256 _amount) public {
-        vm.assume(_amount > minFuzzAmt && _amount < maxFuzzAmt);
+    function testProfitableHarvest(uint256 _fuzzAmount) public {
+        vm.assume(_fuzzAmount > minFuzzAmt && _fuzzAmount < maxFuzzAmt);
+        for(uint8 i = 0; i < assetFixtures.length; ++i) {
+            AssetFixture memory _assetFixture = assetFixtures[i];
+            IVault vault = _assetFixture.vault;
+            Strategy strategy = _assetFixture.strategy;
+            IERC20 want = _assetFixture.want;
+
+            uint256 _amount = _fuzzAmount;
+            uint8 _wantDecimals = IERC20Metadata(address(want)).decimals();
+            if (_wantDecimals != 18) {
+                uint256 _decimalDifference = 18 - _wantDecimals;
+
+                _amount = _amount / (10 ** _decimalDifference);
+            }
         deal(address(want), user, _amount);
 
         // Deposit to the vault
@@ -105,10 +147,24 @@ contract StrategyOperationsTest is StrategyFixture {
         // assertGt(want.balanceOf(address(strategy)) + profit, _amount);
         // assertGt(vault.pricePerShare(), beforePps)
     // TODO: Uncomment the lines below
+     }
     }
 
-    function testChangeDebt(uint256 _amount) public {
-        vm.assume(_amount > minFuzzAmt && _amount < maxFuzzAmt);
+    function testChangeDebt(uint256 _fuzzAmount) public {
+        vm.assume(_fuzzAmount > minFuzzAmt && _fuzzAmount < maxFuzzAmt);
+        for(uint8 i = 0; i < assetFixtures.length; ++i) {
+            AssetFixture memory _assetFixture = assetFixtures[i];
+            IVault vault = _assetFixture.vault;
+            Strategy strategy = _assetFixture.strategy;
+            IERC20 want = _assetFixture.want;
+
+            uint256 _amount = _fuzzAmount;
+            uint8 _wantDecimals = IERC20Metadata(address(want)).decimals();
+            if (_wantDecimals != 18) {
+                uint256 _decimalDifference = 18 - _wantDecimals;
+
+                _amount = _amount / (10 ** _decimalDifference);
+            }
         deal(address(want), user, _amount);
 
         // Deposit to the vault and harvest
@@ -137,10 +193,24 @@ contract StrategyOperationsTest is StrategyFixture {
         // strategy.harvest();
         // assertRelApproxEq(strategy.estimatedTotalAssets(), half, DELTA);
     // In order to pass these tests, you will need to implement prepareReturn.
+     }
     }
 
-    function testSweep(uint256 _amount) public {
-        vm.assume(_amount > minFuzzAmt && _amount < maxFuzzAmt);
+    function testSweep(uint256 _fuzzAmount) public {
+        vm.assume(_fuzzAmount > minFuzzAmt && _fuzzAmount < maxFuzzAmt);
+        for(uint8 i = 0; i < assetFixtures.length; ++i) {
+            AssetFixture memory _assetFixture = assetFixtures[i];
+            IVault vault = _assetFixture.vault;
+            Strategy strategy = _assetFixture.strategy;
+            IERC20 want = _assetFixture.want;
+
+            uint256 _amount = _fuzzAmount;
+            uint8 _wantDecimals = IERC20Metadata(address(want)).decimals();
+            if (_wantDecimals != 18) {
+                uint256 _decimalDifference = 18 - _wantDecimals;
+
+                _amount = _amount / (10 ** _decimalDifference);
+            }
         deal(address(want), user, _amount);
 
         // Strategy want token doesn't work
@@ -178,10 +248,24 @@ contract StrategyOperationsTest is StrategyFixture {
             wethAmount + beforeBalance,
             DELTA
         );
+     }
     }
 
-    function testTriggers(uint256 _amount) public {
-        vm.assume(_amount > minFuzzAmt && _amount < maxFuzzAmt);
+    function testTriggers(uint256 _fuzzAmount) public {
+        vm.assume(_fuzzAmount > minFuzzAmt && _fuzzAmount < maxFuzzAmt);
+        for(uint8 i = 0; i < assetFixtures.length; ++i) {
+            AssetFixture memory _assetFixture = assetFixtures[i];
+            IVault vault = _assetFixture.vault;
+            Strategy strategy = _assetFixture.strategy;
+            IERC20 want = _assetFixture.want;
+
+            uint256 _amount = _fuzzAmount;
+            uint8 _wantDecimals = IERC20Metadata(address(want)).decimals();
+            if (_wantDecimals != 18) {
+                uint256 _decimalDifference = 18 - _wantDecimals;
+
+                _amount = _amount / (10 ** _decimalDifference);
+            }
         deal(address(want), user, _amount);
 
         // Deposit to the vault and harvest
@@ -197,5 +281,6 @@ contract StrategyOperationsTest is StrategyFixture {
 
         strategy.harvestTrigger(0);
         strategy.tendTrigger(0);
+     }
     }
 }
