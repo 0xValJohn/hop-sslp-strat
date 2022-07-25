@@ -15,8 +15,8 @@ contract Strategy is BaseStrategy {
     // ---------------------- STATE VARIABLES ----------------------
 
     uint256 internal constant MAX_BIPS = 10_000;
-    uint256 saddleLpToken;
-    uint256 saddleSwap;
+    address public  saddleLpToken;
+    address public saddleSwap;
     uint256 maxSlippage;
     ISwap public hop;
 
@@ -31,8 +31,8 @@ contract Strategy is BaseStrategy {
 
     function _initializeStrat(address _saddleSwap, address _saddleLpToken) internal {
         maxSlippage = 30;
-        saddleSwap = hop(_saddleSwap);
-        saddleLpToken = IERC20(_saddleLpToken);
+        saddleSwap = _saddleSwap;
+        saddleLpToken = _saddleLpToken;
     }
 
     // ---------------------- CLONING ----------------------
@@ -140,9 +140,7 @@ contract Strategy is BaseStrategy {
         // liquidate some of the Want
         if (_liquidWant < _toFree) {
             // liquidation can result in a profit depending on pool balance
-            (uint256 _liquidationProfit, uint256 _liquidationLoss) =
-                _removeliquidity(_toFree);
-
+            (uint256 _liquidationProfit, uint256 _liquidationLoss) = _removeliquidity(_toFree);
             // update the P&L to account for liquidation
             _loss = _loss + _liquidationLoss;
             _profit = _profit + _liquidationProfit;
@@ -248,15 +246,20 @@ contract Strategy is BaseStrategy {
         }
     }
 
-    function _removeliquidity(uint256 _wantAmount) internal {
+    function _removeliquidity(uint256 _wantAmount) internal returns (uint256 _liquidationProfit, uint256 _liquidationLoss) {
+        uint256 _estimatedTotalAssetsBefore = estimatedTotalAssets();
         uint256 _minToMint = hop.calculateTokenAmount(address(this),[_wantAmount*maxSlippage, 0],0);
         uint256 _deadline = block.timestamp + 10 minutes;
         hop.removeLiquidityOneToken(_wantAmount, 0, _minToMint, _deadline);
+        uint256 _estimatedTotalAssetsAfter = estimatedTotalAssets();
+        if (_estimatedTotalAssetsAfter >= _estimatedTotalAssetsBefore) {
+            return (_estimatedTotalAssetsAfter - _estimatedTotalAssetsBefore, 0);
+        } else { 
+            return (0, _estimatedTotalAssetsBefore - _estimatedTotalAssetsAfter);
+        }
     }
 
-    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount)
-        internal
-    {
+    function _calculateRemoveLiquidityOneToken(uint256 _lpTokenAmount) internal {
         return hop.calculateRemoveLiquidityOneToken(address(this), _lpTokenAmount, 0);
     }
 

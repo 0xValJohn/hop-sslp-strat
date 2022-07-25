@@ -1,4 +1,6 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+make: *** No rule to make target 'all'.  Stop.
+
 # GNU Make 4.3
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -6,7 +8,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jul 21 12:28:59 2022
+# Make data base, printed on Mon Jul 25 11:49:49 2022
 
 # Variables
 
@@ -85,7 +87,7 @@ MAKEFILE_LIST := Makefile .env
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 148203
+VSCODE_PID = 34313
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -93,7 +95,7 @@ XDG_SESSION_TYPE = x11
 # makefile (from 'Makefile', line 10)
 FORK_URL := https://mainnet.infura.io/v3/34d774f6ef71447e8f5b53b34c17d346 
 # environment
-SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/2384,unix/pop-os:/tmp/.ICE-unix/2384
+SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/2727,unix/pop-os:/tmp/.ICE-unix/2727
 # automatic
 *F = $(notdir $*)
 # makefile (from '.env', line 4)
@@ -133,7 +135,7 @@ MAKEFILES :=
 # automatic
 ^F = $(notdir $^)
 # environment
-INVOCATION_ID = 8b402747633e45c3b06b2e427a8cdb22
+INVOCATION_ID = d57d850f2c2744868c28e74ec6455060
 # environment
 USERNAME = simon
 # environment
@@ -161,7 +163,7 @@ GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
 # makefile
 .DEFAULT_GOAL := update
 # environment
-SYSTEMD_EXEC_PID = 2403
+SYSTEMD_EXEC_PID = 2746
 # makefile (from '.env', line 1)
 ETH_RPC_URL = https://mainnet.infura.io/v3/34d774f6ef71447e8f5b53b34c17d346
 # environment
@@ -175,9 +177,9 @@ MAKE_VERSION := 4.3
 # makefile (from '.env', line 2)
 FTM_RPC_URL = https://rpcapi.fantom.network
 # environment
-MANAGERPID = 2168
+MANAGERPID = 2458
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 148203
+GIO_LAUNCHED_DESKTOP_FILE_PID = 34313
 # environment
 _ = /usr/share/code/code
 # environment
@@ -187,7 +189,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # makefile (from 'Makefile', line 14)
 constructor-args := 
 # environment
-JOURNAL_STREAM = 8:41286
+JOURNAL_STREAM = 8:36722
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -264,14 +266,14 @@ trace-contract:
 # Not a target:
 .env:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-21 19:26:05.418573
+#  Last modified 2022-06-21 13:26:05.418573
 #  File has been updated.
 #  Successfully updated.
 
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-07-07 20:07:35.547051611
+#  Last modified 2022-07-07 14:07:35.547051611
 #  File has been updated.
 #  Successfully updated.
 
@@ -279,6 +281,7 @@ clean:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
+ 
 #  recipe to execute (from 'Makefile', line 25):
 	 forge clean
 
@@ -288,9 +291,6 @@ test-contract:
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 19):
 	 forge test -vv --fork-url ${FORK_URL} --match-contract $(contract) --etherscan-api-key ${ETHERSCAN_API_KEY}
-
- 
-make: *** No rule to make target 'all'.  Stop.
 
 test-local:
 #  Implicit rule search has not been done.
@@ -354,6 +354,6 @@ test:
 # strcache performance: lookups = 56 / hit rate = 30%
 # hash-table stats:
 # Load=39/8192=0%, Rehash=0, Collisions=0/56=0%
-# Finished Make data base on Thu Jul 21 12:28:59 2022
+# Finished Make data base on Mon Jul 25 11:49:49 2022
 
  
